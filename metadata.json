@@ -1,0 +1,6 @@
+{
+  "name": "National Car Rental - Gestor de Traslados",
+  "description": "Sistema de gestión de traslados para conductores con sistema de puntos para asegurar imparcialidad entre viajes cortos (tráfico) y largos (mejor pagados).",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "Driver": {
+      "title": "Driver",
+      "description": "A laundry team member who also does car transfers.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "totalPoints": { "type": "number", "description": "Accumulated merit points." },
+        "active": { "type": "boolean" }
+      },
+      "required": ["firstName", "lastName", "totalPoints", "active"]
+    },
+    "Destination": {
+      "title": "Destination",
+      "description": "A city or location where cars are picked up.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["short", "long"] },
+        "pointsValue": { "type": "number", "description": "Points awarded for this trip." },
+        "paymentAmount": { "type": "number", "description": "Payment amount for this destination." }
+      },
+      "required": ["name", "type", "pointsValue", "paymentAmount"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "Record of a car transfer assignment.",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "destinationId": { "type": "string" },
+        "destinationName": { "type": "string" },
+        "driverName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "pointsEarned": { "type": "number" },
+        "paymentAmount": { "type": "number", "description": "Payment amount at the time of trip." },
+        "serviceType": { "type": "string", "enum": ["subida", "bajada", "ambos"] }
+      },
+      "required": ["driverId", "destinationId", "date", "pointsEarned", "paymentAmount", "serviceType"]
+    }
+  },
+  "firestore": {
+    "drivers": {
+      "schema": "Driver",
+      "description": "List of available drivers."
+    },
+    "destinations": {
+      "schema": "Destination",
+      "description": "List of possible pickup locations."
+    },
+    "trips": {
+      "schema": "Trip",
+      "description": "History of transfers executed."
+    }
+  }
+}

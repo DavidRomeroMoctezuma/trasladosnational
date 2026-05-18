@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email.lower() == 'davidivanromeromv@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+    function isValidDriver(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'totalPoints', 'active', 'queuePosition']) &&
+             data.firstName is string && data.firstName.size() > 0 &&
+             data.lastName is string && data.lastName.size() > 0 &&
+             data.totalPoints is number &&
+             data.active is bool &&
+             data.queuePosition is number;
+    }
+
+    function isValidDestination(data) {
+      return data.keys().hasAll(['name', 'type', 'pointsValue', 'paymentAmount']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.type in ['short', 'long'] &&
+             data.pointsValue is number &&
+             data.paymentAmount is number;
+    }
+
+    function isValidTrip(data) {
+      return data.keys().hasAll(['driverId', 'destinationId', 'destinationName', 'driverName', 'date', 'pointsEarned', 'paymentAmount', 'serviceType']) &&
+             isValidId(data.driverId) &&
+             isValidId(data.destinationId) &&
+             data.destinationName is string &&
+             data.driverName is string &&
+             data.date is string &&
+             data.pointsEarned is number &&
+             data.paymentAmount is number &&
+             data.serviceType in ['subida', 'bajada', 'ambos'];
+    }
+
+    match /drivers/{driverId} {
+      allow read, list: if isSignedIn();
+      allow create: if isAdmin() && isValidDriver(incoming());
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (isValidDriver(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['totalPoints', 'active', 'queuePosition']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /destinations/{destId} {
+      allow read, list: if isSignedIn();
+      allow create: if isAdmin() && isValidDestination(incoming()) && isValidId(destId);
+      allow update: if isAdmin() && isValidDestination(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /trips/{tripId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn() && isValidTrip(incoming()) && isValidId(tripId);
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Only manageable via console
+    }
+  }
+}
