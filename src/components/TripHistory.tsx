@@ -77,13 +77,18 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
         console.warn("Could not get min queue position", e);
       }
 
-      // 2. Revert points and move to front of queue
+      // 2. Revert points, correct counters, and move to front of queue
       try {
         console.log(`[DeleteTrip] Updating driver ${trip.driverId}...`);
+        const isTripDenied = trip.status === 'denied';
         await updateDoc(doc(db, 'drivers', trip.driverId), {
           totalPoints: increment(-trip.pointsEarned),
           queuePosition: minPos - 1,
-          active: true
+          active: true,
+          ...(isTripDenied 
+            ? { tripsDenied: increment(-1) } 
+            : { tripsCompleted: increment(-1) }
+          )
         });
       } catch (driverErr: any) {
         console.warn("Could not update driver stats (maybe driver was deleted?):", driverErr);
@@ -232,16 +237,33 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
                     </div>
                   </td>
                   <td className="px-8 py-6 text-sm">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-national-green" />
-                        <span className="font-bold text-slate-700 uppercase tracking-tight">{trip.destinationName}</span>
+                    {trip.status === 'denied' ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle size={14} className="text-red-500" />
+                          <span className="font-black text-red-600 uppercase tracking-tight text-xs">Traslado Negado</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          <span className="text-[9px] px-2 py-0.5 rounded font-black tracking-widest bg-slate-100 text-slate-700">
+                            OFRECIDO: {trip.offeredType === 'short' ? 'CORTO' : 'LARGO'}
+                          </span>
+                          <span className="text-[9px] px-2 py-0.5 rounded font-black tracking-widest bg-red-50 text-red-700 uppercase">
+                            {trip.deniedReason || 'No especificado'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-national-green bg-green-50 w-fit px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">
-                        {trip.serviceType === 'bajada' ? <ArrowDown size={10} /> : trip.serviceType === 'ambos' ? <ArrowUpDown size={10} /> : <ArrowUp size={10} />}
-                        {trip.serviceType || 'subida'}
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <MapPin size={14} className="text-national-green" />
+                          <span className="font-bold text-slate-700 uppercase tracking-tight">{trip.destinationName}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-national-green bg-green-50 w-fit px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">
+                          {trip.serviceType === 'bajada' ? <ArrowDown size={10} /> : trip.serviceType === 'ambos' ? <ArrowUpDown size={10} /> : <ArrowUp size={10} />}
+                          {trip.serviceType || 'subida'}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </td>
                   <td className="px-8 py-6">
                     <span className="font-mono font-black text-national-green text-lg">+{trip.pointsEarned}</span>

@@ -80,11 +80,12 @@ export function LogTrip({ onComplete }: LogTripProps) {
 
       await addDoc(collection(db, 'trips'), tripData);
       
-      // Update driver: add points AND move to the bottom of the queue
+      // Update driver: add points, increment completed trips AND move to the bottom of the queue
       const maxPos = drivers.length > 0 ? Math.max(...drivers.map(d => d.queuePosition)) : 0;
       await updateDoc(doc(db, 'drivers', selectedDriverId), {
         totalPoints: increment(selectedDest.pointsValue),
-        queuePosition: maxPos + 1
+        queuePosition: maxPos + 1,
+        tripsCompleted: increment(1)
       });
 
       onComplete();

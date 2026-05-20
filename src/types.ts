@@ -8,6 +8,8 @@ export interface Driver {
   totalPoints: number;
   active: boolean;
   queuePosition: number;
+  tripsCompleted?: number;
+  tripsDenied?: number;
 }
 
 export interface Destination {
@@ -28,4 +30,7 @@ export interface Trip {
   pointsEarned: number;
   paymentAmount: number;
   serviceType: ServiceType;
+  status?: 'completed' | 'denied';
+  offeredType?: 'short' | 'long';
+  deniedReason?: string;
 }
