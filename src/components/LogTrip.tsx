@@ -146,7 +146,7 @@ export function LogTrip({ onComplete }: LogTripProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
         {/* Step 1: Destination Selection */}
         <div className="flex flex-col gap-6">
           <section className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
@@ -287,13 +287,13 @@ export function LogTrip({ onComplete }: LogTripProps) {
             </motion.div>
           )}
 
-          <div className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid grid-cols-1 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
             {prioritizedDrivers.map((driver, index) => (
               <button
                 key={driver.id}
                 type="button"
                 onClick={() => setSelectedDriverId(driver.id)}
-                className={`w-full p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
+                className={`w-full py-4 px-5 rounded-xl border-2 text-left transition-all relative overflow-hidden group ${
                   selectedDriverId === driver.id 
                     ? 'border-national-yellow bg-white/10 shadow-[0_0_40px_rgba(255,204,0,0.1)]' 
                     : 'border-white/5 bg-white/5 hover:border-white/10'
