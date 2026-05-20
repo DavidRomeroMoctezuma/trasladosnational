@@ -297,17 +297,6 @@ export default function App() {
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/10">
-          <div className="flex items-center gap-3 mb-6 bg-white/5 p-3 rounded-2xl border border-white/10">
-            <img 
-              src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
-              className="w-8 h-8 rounded-full border border-white/20 shadow-sm" 
-              alt="Avatar"
-            />
-            <div className="overflow-hidden">
-              <p className="text-[10px] font-black uppercase tracking-tight truncate text-white">{user.displayName}</p>
-              <p className="text-[9px] text-green-200/50 truncate font-medium">{user.email}</p>
-            </div>
-          </div>
           <button 
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-3 py-3 text-[10px] font-black text-white bg-white/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all uppercase tracking-widest cursor-pointer"
