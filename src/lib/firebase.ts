@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from 'firebase/auth';
 import { getFirestore, collection, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -13,6 +13,16 @@ export async function loginWithGoogle() {
     await signInWithPopup(auth, googleProvider);
   } catch (error) {
     console.error('Login error:', error);
+  }
+}
+
+export async function loginAnonymously() {
+  try {
+    const credential = await signInAnonymously(auth);
+    return credential.user;
+  } catch (error) {
+    console.error('Anonymous login error:', error);
+    throw error;
   }
 }
 

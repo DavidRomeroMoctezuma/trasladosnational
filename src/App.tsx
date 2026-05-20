@@ -5,7 +5,7 @@
 
 import { useState, useEffect, ReactNode, FormEvent } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, loginWithGoogle, logout } from './lib/firebase';
+import { auth, loginWithGoogle, logout, loginAnonymously } from './lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Car, 
@@ -33,7 +33,13 @@ import { syncOfficialTeam, syncOfficialDestinations } from './services/dbSetup';
 type View = 'dashboard' | 'drivers' | 'destinations' | 'history' | 'log-trip';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<{
+    uid: string;
+    displayName: string;
+    email: string;
+    photoURL: string | null;
+    isAnonymous: boolean;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -42,16 +48,25 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-      
       if (u) {
-        // Automatically enable admin mode for the owner
-        if (u.email === 'davidivanromeromv@gmail.com') {
+        const isOwner = u.email === 'davidivanromeromv@gmail.com';
+        const savedAdminBypass = localStorage.getItem('admin_bypass_mode') === 'true';
+        const isAdminLog = isOwner || savedAdminBypass;
+
+        setUser({
+          uid: u.uid,
+          displayName: isAdminLog 
+            ? 'Administrador CDMX' 
+            : 'Colaborador CDMX',
+          email: 'operaciones-cdmx@national.com',
+          photoURL: u.photoURL,
+          isAnonymous: u.isAnonymous,
+        });
+
+        if (isAdminLog) {
           setIsAdminMode(true);
         }
 
-        // Auto setup on auth
         const setupData = async () => {
           try {
             await syncOfficialTeam();
@@ -61,11 +76,68 @@ export default function App() {
           }
         };
         setupData();
+      } else {
+        setUser(null);
+        setIsAdminMode(false);
+        localStorage.removeItem('admin_bypass_mode');
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  const handleColaboradorLogin = async () => {
+    try {
+      setLoading(true);
+      localStorage.setItem('admin_bypass_mode', 'false');
+      await loginAnonymously();
+    } catch (err) {
+      console.error("Login as guest failed:", err);
+      setUser({
+        uid: 'fallback-guest',
+        displayName: 'Colaborador CDMX',
+        email: 'operaciones-cdmx@national.com',
+        photoURL: null,
+        isAnonymous: true
+      });
+      setIsAdminMode(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    try {
+      setLoading(true);
+      localStorage.setItem('admin_bypass_mode', 'true');
+      await loginAnonymously();
+      setIsAdminMode(true);
+    } catch (err) {
+      console.error("Login as admin failed:", err);
+      setUser({
+        uid: 'fallback-admin',
+        displayName: 'Administrador CDMX',
+        email: 'operaciones-cdmx@national.com',
+        photoURL: null,
+        isAnonymous: true
+      });
+      setIsAdminMode(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    localStorage.removeItem('admin_bypass_mode');
+    setIsAdminMode(false);
+    setUser(null);
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   const handleAdminAuth = (e: FormEvent) => {
     e.preventDefault();
@@ -82,6 +154,7 @@ export default function App() {
   const toggleAdminMode = () => {
     if (isAdminMode) {
       setIsAdminMode(false);
+      localStorage.setItem('admin_bypass_mode', 'false');
       return;
     }
     setShowAdminInput(!showAdminInput);
@@ -109,18 +182,28 @@ export default function App() {
           className="max-w-md w-full bg-white/5 backdrop-blur-xl p-10 rounded-[2rem] border border-white/10 shadow-2xl text-center z-10"
         >
           <div className="w-24 h-24 bg-white p-4 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl">
-            <div className="text-national-green font-black text-2xl leading-none">National</div>
+            <div className="text-national-green font-black text-2xl leading-none font-sans">National</div>
           </div>
           <h1 className="text-3xl font-black mb-2 tracking-tight uppercase">Control de Traslados</h1>
           <p className="text-green-100/70 mb-10 font-medium">CDMX Operations • Asignación Imparcial</p>
           
-          <button
-            onClick={loginWithGoogle}
-            className="w-full bg-national-yellow text-national-green font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-3 hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-950/20 active:scale-95 uppercase tracking-wider"
-          >
-            <LogIn size={20} />
-            Acceder al Sistema
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={handleColaboradorLogin}
+              className="w-full bg-national-yellow text-national-green font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-3 hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-950/20 active:scale-95 uppercase tracking-wider text-sm cursor-pointer"
+            >
+              <LogIn size={20} />
+              Acceder como Colaborador
+            </button>
+
+            <button
+              onClick={handleAdminLogin}
+              className="w-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 uppercase tracking-wider text-sm cursor-pointer"
+            >
+              <Lock size={18} className="text-national-yellow" />
+              Acceso Administrador
+            </button>
+          </div>
           
           <p className="mt-10 text-[10px] text-green-200/40 uppercase tracking-[0.3em] font-black">
             National Car Rental Systems
@@ -226,8 +309,8 @@ export default function App() {
             </div>
           </div>
           <button 
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-3 py-3 text-[10px] font-black text-white bg-white/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all uppercase tracking-widest"
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-3 py-3 text-[10px] font-black text-white bg-white/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all uppercase tracking-widest cursor-pointer"
           >
             <LogOut size={14} />
             Salir

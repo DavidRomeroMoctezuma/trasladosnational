@@ -34,9 +34,9 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
 
   useEffect(() => {
     setLoading(true);
-    // Create date range for the selected month in local time
-    const startOfMonth = new Date(selectedYear, selectedMonth, 1);
-    const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+    // Create date range for the selected month in local time, converted to ISO strings
+    const startOfMonth = new Date(selectedYear, selectedMonth, 1).toISOString();
+    const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59).toISOString();
 
     const q = query(
       collection(db, 'trips'), 
@@ -60,7 +60,11 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
     
     setIsDeleting(true);
     const trip = confirmDelete;
-    console.log(`[DeleteTrip] Initiating deletion for trip ${trip.id} by user ${auth.currentUser?.email}`);
+    const currentUserEmail = auth.currentUser?.email === 'davidivanromeromv@gmail.com' 
+      ? 'operaciones-cdmx@national.com' 
+      : (auth.currentUser?.email || 'operaciones-cdmx@national.com');
+    
+    console.log(`[DeleteTrip] Initiating deletion for trip ${trip.id} by user ${currentUserEmail}`);
     
     try {
       // 1. Find the current minimum queue position
@@ -94,7 +98,7 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
     } catch (err: any) {
       console.error("Error deleting trip:", err);
       if (err.code === 'permission-denied') {
-        setStatus({ type: 'error', message: `Permisos insuficientes. Usuario: ${auth.currentUser?.email}` });
+        setStatus({ type: 'error', message: `Permisos insuficientes. Usuario: ${currentUserEmail}` });
       } else {
         setStatus({ type: 'error', message: `Error: ${err.message || 'Error desconocido'}` });
       }
