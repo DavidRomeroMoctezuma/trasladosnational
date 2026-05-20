@@ -10,6 +10,7 @@ export interface Driver {
   queuePosition: number;
   tripsCompleted?: number;
   tripsDenied?: number;
+  billingStatus?: 'ok' | 'delayed';
 }
 
 export interface Destination {
@@ -33,4 +34,5 @@ export interface Trip {
   status?: 'completed' | 'denied';
   offeredType?: 'short' | 'long';
   deniedReason?: string;
+  foodAllowance?: number;
 }

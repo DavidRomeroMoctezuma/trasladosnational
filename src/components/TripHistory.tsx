@@ -269,7 +269,14 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
                     <span className="font-mono font-black text-national-green text-lg">+{trip.pointsEarned}</span>
                   </td>
                   <td className="px-8 py-6 whitespace-nowrap">
-                    <span className="font-mono font-black text-slate-900 text-lg">{formatCurrency(trip.paymentAmount || 0)}</span>
+                    <div className="flex flex-col">
+                      <span className="font-mono font-black text-slate-900 text-lg">{formatCurrency(trip.paymentAmount || 0)}</span>
+                      {trip.foodAllowance !== undefined && trip.foodAllowance > 0 && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md w-fit mt-1 border border-amber-200/55 uppercase font-sans">
+                          Comida: {formatCurrency(trip.foodAllowance)}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-8 py-6 text-right">
                     {isAdmin && (

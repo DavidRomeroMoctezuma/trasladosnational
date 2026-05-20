@@ -153,7 +153,12 @@ export function Dashboard({ onLogTrip, isAdmin = false }: DashboardProps) {
                         <div className="flex items-center gap-4">
                           <div>
                             <p className="font-bold text-slate-900">{driver.firstName} {driver.lastName}</p>
-                            {index === 0 && <p className="text-[10px] text-national-green uppercase tracking-widest font-black animate-pulse">Siguiente para viaje</p>}
+                            {driver.billingStatus === 'delayed' ? (
+                              <p className="text-[9px] text-amber-600 uppercase tracking-wide font-extrabold mt-0.5">⚠️ Retraso de Tickets/Facturación</p>
+                            ) : (
+                              <p className="text-[9px] text-slate-400 font-semibold tracking-tight mt-0.5">✓ Al corriente</p>
+                            )}
+                            {index === 0 && <p className="text-[9px] text-national-green uppercase tracking-widest font-black animate-pulse mt-0.5">Siguiente para viaje</p>}
                           </div>
                         </div>
                       </td>

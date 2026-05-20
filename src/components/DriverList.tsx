@@ -12,6 +12,7 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [billingStatus, setBillingStatus] = useState<'ok' | 'delayed'>('ok');
   const [search, setSearch] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
@@ -58,7 +59,8 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
       if (editingDriver) {
         await updateDoc(doc(db, 'drivers', editingDriver.id), {
           firstName,
-          lastName
+          lastName,
+          billingStatus
         });
         setEditingDriver(null);
       } else {
@@ -68,11 +70,13 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
           lastName,
           totalPoints: 0,
           active: true,
-          queuePosition: nextPos
+          queuePosition: nextPos,
+          billingStatus
         });
       }
       setFirstName('');
       setLastName('');
+      setBillingStatus('ok');
       setIsAdding(false);
     } catch (err) {
       console.error(err);
@@ -94,6 +98,7 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
     setEditingDriver(driver);
     setFirstName(driver.firstName);
     setLastName(driver.lastName);
+    setBillingStatus(driver.billingStatus || 'ok');
     setIsAdding(true);
   };
 
@@ -101,6 +106,7 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
     setEditingDriver(null);
     setFirstName('');
     setLastName('');
+    setBillingStatus('ok');
     setIsAdding(false);
   };
 
@@ -155,14 +161,14 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
             exit={{ opacity: 0, y: -20 }}
             className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-xl"
           >
-            <form onSubmit={addDriver} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <form onSubmit={addDriver} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Nombre</label>
                 <input 
                   type="text" 
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-national-green/5 transition-all font-bold placeholder:text-slate-300"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-national-green/5 transition-all font-bold placeholder:text-slate-300 animate-fade-in"
                   placeholder="Ej. Daniel"
                   required
                 />
@@ -173,25 +179,36 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
                   type="text" 
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-national-green/5 transition-all font-bold placeholder:text-slate-300"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-national-green/5 transition-all font-bold placeholder:text-slate-300 animate-fade-in"
                   placeholder="Ej. Flores"
                   required
                 />
               </div>
-              <div className="flex items-end gap-3">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Facturación / Tickets</label>
+                <select
+                  value={billingStatus}
+                  onChange={e => setBillingStatus(e.target.value as 'ok' | 'delayed')}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-national-green/5 transition-all font-bold cursor-pointer"
+                >
+                  <option value="ok">AL CORRIENTE (FACTURA / REPORTE OK)</option>
+                  <option value="delayed">CON DEMORAS (CON RETRASOS / TICKETS PENDIENTES)</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
                 <button 
                   type="submit"
-                  className="flex-1 bg-national-green text-white font-black h-14 rounded-xl hover:bg-green-900 transition-all shadow-lg uppercase tracking-widest text-xs"
+                  className="flex-1 bg-national-green text-white font-black h-14 rounded-xl hover:bg-green-900 transition-all shadow-lg uppercase tracking-widest text-xs cursor-pointer"
                 >
-                  {editingDriver ? 'Guardar Cambios' : 'Confirmar Alta'}
+                  {editingDriver ? 'Guardar' : 'Confirmar'}
                 </button>
                 {editingDriver && (
                   <button 
                     type="button"
                     onClick={cancelEdit}
-                    className="px-6 bg-slate-100 text-slate-500 font-black h-14 rounded-xl hover:bg-slate-200 transition-all uppercase tracking-widest text-xs"
+                    className="px-6 bg-slate-100 text-slate-500 font-black h-14 rounded-xl hover:bg-slate-200 transition-all uppercase tracking-widest text-xs cursor-pointer"
                   >
-                    Cancelar
+                    X
                   </button>
                 )}
               </div>
@@ -221,6 +238,7 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
                 <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo</th>
                 <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Realizados</th>
                 <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Negados</th>
+                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Facturación / Tickets</th>
                 <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Puntos Totales</th>
                 <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estatus Operativo</th>
                 <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestión</th>
@@ -242,6 +260,25 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span className="font-mono font-bold text-red-500 text-base">{driver.tripsDenied || 0}</span>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tight ${
+                      driver.billingStatus === 'delayed'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                        : 'bg-green-50 text-national-green border border-green-150'
+                    }`}>
+                      {driver.billingStatus === 'delayed' ? (
+                        <>
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span>Con demoras (Pendiente)</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-1.5 h-1.5 rounded-full bg-national-green" />
+                          <span>Al corriente (OK)</span>
+                        </>
+                      )}
+                    </span>
                   </td>
                   <td className="px-8 py-6">
                     <span className="font-mono font-black text-national-green text-lg">{driver.totalPoints}</span>
@@ -440,6 +477,17 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
                               </span>
                               <span className="text-xs font-bold text-red-600 uppercase tracking-tight">
                                 "{trip.deniedReason || 'No especificado'}"
+                              </span>
+                            </div>
+                          )}
+
+                          {!isDenied && trip.foodAllowance !== undefined && trip.foodAllowance > 0 && (
+                            <div className="bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/30 mb-2 flex items-center justify-between">
+                              <span className="text-[9px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase tracking-wider">
+                                Viáticos de Comida
+                              </span>
+                              <span className="text-xs font-black font-mono text-amber-600">
+                                {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(trip.foodAllowance)}
                               </span>
                             </div>
                           )}

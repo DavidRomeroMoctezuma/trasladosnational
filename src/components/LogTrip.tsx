@@ -39,6 +39,12 @@ export function LogTrip({ onComplete }: LogTripProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // New States for custom billing and acceptance choices
+  const [tripStatus, setTripStatus] = useState<'completed' | 'denied'>('completed');
+  const [foodAllowance, setFoodAllowance] = useState<number | ''>('');
+  const [deniedReason, setDeniedReason] = useState<'no quiso' | 'esta en turno' | 'tiene chofereada' | 'sin opcion por faltas'>('no quiso');
+  const [offeredType, setOfferedType] = useState<'short' | 'long'>('short');
+
   useEffect(() => {
     const unsubDrivers = onSnapshot(query(collection(db, 'drivers'), orderBy('queuePosition', 'asc')), (snap) => {
       setDrivers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Driver)));
@@ -53,6 +59,12 @@ export function LogTrip({ onComplete }: LogTripProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedDest) {
+      setOfferedType(selectedDest.type);
+    }
+  }, [selectedDestId]);
+
   const selectedDest = destinations.find(d => d.id === selectedDestId);
   
   // Sorting: Purely based on queuePosition for active drivers
@@ -64,34 +76,62 @@ export function LogTrip({ onComplete }: LogTripProps) {
     
     setSubmitting(true);
     const driver = drivers.find(d => d.id === selectedDriverId)!;
-    const finalPayment = serviceType === 'ambos' ? selectedDest.paymentAmount * 2 : selectedDest.paymentAmount;
     
     try {
-      const tripData = {
-        driverId: selectedDriverId,
-        driverName: `${driver.firstName} ${driver.lastName}`,
-        destinationId: selectedDestId,
-        destinationName: selectedDest.name,
-        pointsEarned: selectedDest.pointsValue,
-        paymentAmount: finalPayment,
-        date: new Date().toISOString(),
-        serviceType
-      };
+      if (tripStatus === 'completed') {
+        const finalPayment = serviceType === 'ambos' ? selectedDest.paymentAmount * 2 : selectedDest.paymentAmount;
+        const tripData = {
+          driverId: selectedDriverId,
+          driverName: `${driver.firstName} ${driver.lastName}`,
+          destinationId: selectedDestId,
+          destinationName: selectedDest.name,
+          pointsEarned: selectedDest.pointsValue,
+          paymentAmount: finalPayment,
+          date: new Date().toISOString(),
+          serviceType,
+          status: 'completed' as const,
+          foodAllowance: foodAllowance === '' ? 0 : Number(foodAllowance)
+        };
 
-      await addDoc(collection(db, 'trips'), tripData);
-      
-      // Update driver: add points, increment completed trips AND move to the bottom of the queue
-      const maxPos = drivers.length > 0 ? Math.max(...drivers.map(d => d.queuePosition)) : 0;
-      await updateDoc(doc(db, 'drivers', selectedDriverId), {
-        totalPoints: increment(selectedDest.pointsValue),
-        queuePosition: maxPos + 1,
-        tripsCompleted: increment(1)
-      });
+        await addDoc(collection(db, 'trips'), tripData);
+        
+        // Update driver: add points, increment completed trips AND move to the bottom of the queue
+        const maxPos = drivers.length > 0 ? Math.max(...drivers.map(d => d.queuePosition)) : 0;
+        await updateDoc(doc(db, 'drivers', selectedDriverId), {
+          totalPoints: increment(selectedDest.pointsValue),
+          queuePosition: maxPos + 1,
+          tripsCompleted: increment(1)
+        });
+      } else {
+        // Log denial
+        const tripData = {
+          driverId: selectedDriverId,
+          driverName: `${driver.firstName} ${driver.lastName}`,
+          destinationId: 'denied_trip',
+          destinationName: `TRASLADO NEGADO (${offeredType === 'short' ? 'CORTO' : 'LARGO'})`,
+          pointsEarned: 0,
+          paymentAmount: 0,
+          serviceType: 'subida' as const,
+          date: new Date().toISOString(),
+          status: 'denied' as const,
+          offeredType,
+          deniedReason
+        };
+
+        await addDoc(collection(db, 'trips'), tripData);
+
+        // Move to bottom of queue and increment denial counter
+        const maxPos = drivers.length > 0 ? Math.max(...drivers.map(d => d.queuePosition)) : 0;
+        await updateDoc(doc(db, 'drivers', selectedDriverId), {
+          queuePosition: maxPos + 1,
+          tripsDenied: increment(1)
+        });
+      }
 
       onComplete();
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'trips/drivers');
-      alert('Error al registrar el viaje');
+      alert('Error al registrar el traslado o negación');
     } finally {
       setSubmitting(false);
     }
@@ -268,9 +308,18 @@ export function LogTrip({ onComplete }: LogTripProps) {
                     </div>
                     <div>
                       <p className="font-black text-lg uppercase tracking-tight">{driver.firstName} {driver.lastName}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
                         <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Servicios</span>
-                        <span className="text-sm font-black font-mono text-national-yellow">{driver.totalPoints}</span>
+                        <span className="text-sm font-black font-mono text-national-yellow mr-2">{driver.totalPoints}</span>
+                        {driver.billingStatus === 'delayed' ? (
+                          <span className="text-[8px] bg-amber-500/20 text-amber-300 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                            ⚠️ RETRAZO DE TICKETS
+                          </span>
+                        ) : (
+                          <span className="text-[8px] bg-green-500/20 text-green-300 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                            ✓ AL CORRIENTE
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -284,13 +333,130 @@ export function LogTrip({ onComplete }: LogTripProps) {
             ))}
           </div>
 
+          {/* Action options when driver is selected */}
+          <AnimatePresence>
+            {selectedDriverId && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-6 pt-6 border-t border-white/10 space-y-4 text-left"
+              >
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Estatus de Respuesta</label>
+                  <div className="flex bg-white/5 p-1 rounded-xl gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTripStatus('completed')}
+                      className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        tripStatus === 'completed'
+                          ? 'bg-national-yellow text-national-green font-bold shadow-md'
+                          : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      ✓ Aceptó
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTripStatus('denied')}
+                      className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        tripStatus === 'denied'
+                          ? 'bg-red-500 text-white font-bold shadow-md'
+                          : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      ✗ Negó
+                    </button>
+                  </div>
+                </div>
+
+                {tripStatus === 'completed' ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2"
+                  >
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest">Dinero para Comida ($ MXN)</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-white/45 font-mono text-xs">$</span>
+                      <input
+                        type="number"
+                        placeholder="Ej. 500"
+                        value={foodAllowance}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFoodAllowance(val === '' ? '' : Number(val));
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-national-yellow font-mono font-bold text-white text-sm"
+                      />
+                    </div>
+                    <p className="text-[10px] text-white/40">Monto entregado al colaborador para sus viáticos de comida.</p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Razón de Negación</label>
+                      <select
+                        value={deniedReason}
+                        onChange={(e) => setDeniedReason(e.target.value as any)}
+                        className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-national-yellow font-bold text-white text-xs cursor-pointer"
+                      >
+                        <option value="no quiso" className="text-white bg-slate-800">No quiso realizar el viaje</option>
+                        <option value="esta en turno" className="text-white bg-slate-800">Está en turno operativo</option>
+                        <option value="tiene chofereada" className="text-white bg-slate-800">Tiene chofereada activa</option>
+                        <option value="sin opcion por faltas" className="text-white bg-slate-800">Sin opción por faltas</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Tipo de Traslado Ofrecido</label>
+                      <div className="flex bg-white/5 p-1 rounded-xl gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setOfferedType('short')}
+                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                            offeredType === 'short'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              : 'text-white/40 hover:text-white/60'
+                          }`}
+                        >
+                          CORTO (Cercano)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOfferedType('long')}
+                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                            offeredType === 'long'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'text-white/40 hover:text-white/60'
+                          }`}
+                        >
+                          LARGO (Lejano)
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-white/40 mt-1.5">Al registrar la negación, se acumulará en su historial y el colaborador descenderá al final de la fila.</p>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="mt-10 pt-8 border-t border-white/10">
             <button
               type="submit"
               disabled={!selectedDriverId || submitting}
-              className="w-full bg-national-yellow text-national-green font-black py-5 px-8 rounded-2xl shadow-xl shadow-national-yellow/10 hover:bg-yellow-400 transition-all uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 disabled:opacity-30 active:scale-95 transition-all"
+              className={`w-full font-black py-5 px-8 rounded-2xl shadow-xl transition-all uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 disabled:opacity-30 active:scale-95 transition-all cursor-pointer ${
+                tripStatus === 'denied'
+                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-red-950/10'
+                  : 'bg-national-yellow text-national-green hover:bg-yellow-400 shadow-national-yellow/10'
+              }`}
             >
-              {submitting ? 'PROCESANDO...' : 'REGISTRAR TRASLADO'}
+              {submitting ? 'PROCESANDO...' : (tripStatus === 'denied' ? 'REGISTRAR NEGACIÓN' : 'REGISTRAR TRASLADO')}
               {!submitting && <ArrowRight size={18} />}
             </button>
           </div>
