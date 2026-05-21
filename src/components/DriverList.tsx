@@ -231,37 +231,37 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-white border-b border-slate-100">
               <tr>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo</th>
-                <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Realizados</th>
-                <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Negados</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Facturación / Tickets</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Puntos Totales</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estatus Operativo</th>
-                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestión</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo</th>
+                <th className="px-4 xl:px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Realizados</th>
+                <th className="px-4 xl:px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Negados</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Facturación / Tickets</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Puntos Totales</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estatus Operativo</th>
+                <th className="px-4 xl:px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestión</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filteredDrivers.map((driver, index) => (
                 <tr key={driver.id} className="hover:bg-green-50/30 transition-colors group">
-                  <td className="px-8 py-6">
+                  <td className="px-4 xl:px-8 py-6">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${driver.active ? 'bg-national-green text-white' : 'bg-slate-200 text-slate-500 shadow-inner'}`}>
                         {index + 1}
                       </div>
-                      <span className="font-bold text-slate-800 text-sm">{driver.firstName} {driver.lastName}</span>
+                      <span className="font-bold text-slate-800 text-sm whitespace-nowrap">{driver.firstName} {driver.lastName}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-center">
+                  <td className="px-4 xl:px-8 py-6 text-center">
                     <span className="font-mono font-bold text-slate-700 text-base">{driver.tripsCompleted || 0}</span>
                   </td>
-                  <td className="px-8 py-6 text-center">
+                  <td className="px-4 xl:px-8 py-6 text-center">
                     <span className="font-mono font-bold text-red-500 text-base">{driver.tripsDenied || 0}</span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-4 xl:px-8 py-6 text-sm">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tight ${
                       driver.billingStatus === 'delayed'
                         ? 'bg-amber-50 text-amber-700 border border-amber-200' 
@@ -270,30 +270,30 @@ export function DriverList({ isAdmin = false }: { isAdmin?: boolean }) {
                       {driver.billingStatus === 'delayed' ? (
                         <>
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                          <span>Con demoras (Pendiente)</span>
+                          <span className="whitespace-nowrap">Con demoras (Pendiente)</span>
                         </>
                       ) : (
                         <>
                           <div className="w-1.5 h-1.5 rounded-full bg-national-green" />
-                          <span>Al corriente (OK)</span>
+                          <span className="whitespace-nowrap">Al corriente (OK)</span>
                         </>
                       )}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-4 xl:px-8 py-6">
                     <span className="font-mono font-black text-national-green text-lg">{driver.totalPoints}</span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-4 xl:px-8 py-6">
                     <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] ${
                       driver.active 
                         ? 'bg-green-100 text-national-green' 
                         : 'bg-slate-100 text-slate-500'
                     }`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${driver.active ? 'bg-national-green animate-pulse' : 'bg-slate-400'}`} />
-                      {driver.active ? 'Operativo' : 'Inactivo'}
+                      <span className="whitespace-nowrap">{driver.active ? 'Operativo' : 'Inactivo'}</span>
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right">
+                  <td className="px-4 xl:px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-opacity">
                       {isAdmin && (
                         <>

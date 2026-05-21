@@ -110,7 +110,7 @@ export function Dashboard({ onLogTrip, isAdmin = false }: DashboardProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Leaderboard/Queue */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 min-w-0 space-y-6">
           <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
             <div className="bg-slate-50 px-8 py-5 border-b border-slate-200 flex justify-between items-center">
               <h3 className="font-black text-slate-700 uppercase text-xs tracking-[0.2em] flex items-center gap-2">
@@ -122,17 +122,17 @@ export function Dashboard({ onLogTrip, isAdmin = false }: DashboardProps) {
               </span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left border-collapse">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left border-collapse">
                 <thead className="bg-white text-[10px] uppercase font-black text-slate-400">
                   <tr>
-                    <th className="px-6 py-4 whitespace-nowrap">Orden</th>
-                    <th className="px-6 py-4 whitespace-nowrap">Nombre</th>
-                    <th className="px-6 py-4 text-center whitespace-nowrap">Realizados</th>
-                    <th className="px-6 py-4 text-center whitespace-nowrap">Negados</th>
-                    <th className="px-6 py-4 text-center whitespace-nowrap">Puntos</th>
-                    <th className="px-6 py-4 text-right whitespace-nowrap">Estatus</th>
-                    <th className="px-6 py-4 text-right whitespace-nowrap">Acción</th>
+                    <th className="px-4 xl:px-6 py-4 whitespace-nowrap">Orden</th>
+                    <th className="px-4 xl:px-6 py-4 whitespace-nowrap">Nombre</th>
+                    <th className="px-4 xl:px-6 py-4 text-center whitespace-nowrap">Realizados</th>
+                    <th className="px-4 xl:px-6 py-4 text-center whitespace-nowrap">Negados</th>
+                    <th className="px-4 xl:px-6 py-4 text-center whitespace-nowrap">Puntos</th>
+                    <th className="px-4 xl:px-6 py-4 text-right whitespace-nowrap">Estatus</th>
+                    <th className="px-4 xl:px-6 py-4 text-right whitespace-nowrap">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-sans">
@@ -141,7 +141,7 @@ export function Dashboard({ onLogTrip, isAdmin = false }: DashboardProps) {
                       key={driver.id}
                       className="hover:bg-green-50/50 transition-colors group"
                     >
-                      <td className="px-6 py-5 whitespace-nowrap">
+                      <td className="px-4 xl:px-6 py-5 whitespace-nowrap">
                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${
                             index === 0 ? 'bg-national-green text-white animate-pulse' : 
                             'bg-slate-100 text-slate-500'
@@ -149,7 +149,7 @@ export function Dashboard({ onLogTrip, isAdmin = false }: DashboardProps) {
                             {index + 1}
                           </div>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-4 xl:px-6 py-5">
                         <div className="flex items-center gap-4 whitespace-nowrap">
                           <div>
                             <p className="font-bold text-slate-900 whitespace-nowrap">{driver.firstName} {driver.lastName}</p>
@@ -162,23 +162,23 @@ export function Dashboard({ onLogTrip, isAdmin = false }: DashboardProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-5 text-center font-bold font-mono text-slate-600 text-sm whitespace-nowrap">
+                      <td className="px-4 xl:px-6 py-5 text-center font-bold font-mono text-slate-600 text-sm whitespace-nowrap">
                         {driver.tripsCompleted || 0}
                       </td>
-                      <td className="px-6 py-5 text-center font-bold font-mono text-red-500 text-sm whitespace-nowrap">
+                      <td className="px-4 xl:px-6 py-5 text-center font-bold font-mono text-red-500 text-sm whitespace-nowrap">
                         {driver.tripsDenied || 0}
                       </td>
-                      <td className="px-6 py-5 text-center whitespace-nowrap">
+                      <td className="px-4 xl:px-6 py-5 text-center whitespace-nowrap">
                         <p className="font-mono font-black text-national-green text-lg">{driver.totalPoints}</p>
                       </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <td className="px-4 xl:px-6 py-5 text-right whitespace-nowrap">
                         <span className={`text-[9px] px-2 py-1 rounded font-black tracking-widest ${
                           driver.active ? 'bg-green-100 text-national-green' : 'bg-slate-100 text-slate-400'
                         }`}>
                           {driver.active ? 'OPERATIVO' : 'FUERA'}
                         </span>
                       </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <td className="px-4 xl:px-6 py-5 text-right whitespace-nowrap">
                         {driver.active ? (
                           <button
                             onClick={() => setDenyingDriver(driver)}

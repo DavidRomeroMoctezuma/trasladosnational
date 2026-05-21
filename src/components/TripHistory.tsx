@@ -205,22 +205,22 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
       </AnimatePresence>
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[720px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Fecha y Hora</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Colaborador</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ciudad de Destino</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Servicios</th>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Pago Monetario</th>
-                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gestión</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Fecha y Hora</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Colaborador</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ciudad de Destino</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Servicios</th>
+                <th className="px-4 xl:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Pago Monetario</th>
+                <th className="px-4 xl:px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gestión</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-sans">
               {trips.map(trip => (
                 <tr key={trip.id} className="hover:bg-green-50/30 transition-colors group">
-                  <td className="px-8 py-6 whitespace-nowrap">
+                  <td className="px-4 xl:px-8 py-6 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <Calendar size={14} className="text-slate-300" />
                       <span className="font-mono text-xs font-bold text-slate-600">
@@ -228,7 +228,7 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
                       </span>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-4 xl:px-8 py-6">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-national-green text-white flex items-center justify-center font-black text-[10px]">
                         {trip.driverName[0]}
@@ -236,12 +236,12 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
                       <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{trip.driverName}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-sm">
+                  <td className="px-4 xl:px-8 py-6 text-sm">
                     {trip.status === 'denied' ? (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <AlertCircle size={14} className="text-red-500" />
-                          <span className="font-black text-red-600 uppercase tracking-tight text-xs">Traslado Negado</span>
+                          <span className="font-black text-red-600 uppercase tracking-tight text-xs animate-pulse">Traslado Negado</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           <span className="text-[9px] px-2 py-0.5 rounded font-black tracking-widest bg-slate-100 text-slate-700">
@@ -265,10 +265,10 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
                       </div>
                     )}
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-4 xl:px-8 py-6">
                     <span className="font-mono font-black text-national-green text-lg">+{trip.pointsEarned}</span>
                   </td>
-                  <td className="px-8 py-6 whitespace-nowrap">
+                  <td className="px-4 xl:px-8 py-6 whitespace-nowrap">
                     <div className="flex flex-col">
                       <span className="font-mono font-black text-slate-900 text-lg">{formatCurrency(trip.paymentAmount || 0)}</span>
                       {trip.foodAllowance !== undefined && trip.foodAllowance > 0 && (
@@ -278,7 +278,7 @@ export function TripHistory({ isAdmin = false }: { isAdmin?: boolean }) {
                       )}
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-right">
+                  <td className="px-4 xl:px-8 py-6 text-right">
                     {isAdmin && (
                       <button 
                         onClick={() => setConfirmDelete(trip)}
